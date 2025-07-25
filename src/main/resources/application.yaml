@@ -13,3 +13,6 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect
         format_sql: true
+  jwt:
+    secret: mySuperSecretKey12345678901234567890
+    expiration: 43,200,000 # en milisegundos (12 hora)

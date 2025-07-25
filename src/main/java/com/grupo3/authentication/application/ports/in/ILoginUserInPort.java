@@ -1,5 +1,6 @@
 package com.grupo3.authentication.application.ports.in;
 
 public interface ILoginUserInPort {
-    String loginUser(String username, String password);
+
+    String loginUser(String username, String password); //se regresa el token
 }
