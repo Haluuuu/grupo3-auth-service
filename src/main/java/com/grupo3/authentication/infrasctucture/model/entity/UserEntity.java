@@ -1,4 +1,4 @@
-package com.grupo3.authentication.infrasctucture.entity;
+package com.grupo3.authentication.infrasctucture.model.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

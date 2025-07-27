@@ -3,11 +3,13 @@ package com.grupo3.authentication.infrasctucture.repository.Impl;
 import com.grupo3.authentication.application.ports.out.IUserServiceOutPort;
 import com.grupo3.authentication.domain.models.User;
 import com.grupo3.authentication.domain.schemas.RegisterForm;
-import com.grupo3.authentication.infrasctucture.entity.UserEntity;
+import com.grupo3.authentication.infrasctucture.model.entity.UserEntity;
 import com.grupo3.authentication.infrasctucture.repository.IUserRepository;
+import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
+@Service
 public class UserServiceImpl implements IUserServiceOutPort {
     private final IUserRepository userRepository;
 

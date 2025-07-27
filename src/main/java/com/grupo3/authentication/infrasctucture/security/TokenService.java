@@ -8,9 +8,11 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Service;
 
+
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
+
 @Service
 public class TokenService implements ITokenOutPort{
 
@@ -19,7 +21,7 @@ public class TokenService implements ITokenOutPort{
 
     public TokenService(JwtProperties jwtProperties) {
         this.secretKey = Keys.hmacShaKeyFor(jwtProperties.getSecret().getBytes(StandardCharsets.UTF_8));
-        this.expirationMillis = jwtProperties.getExpiration();
+        this.expirationMillis = Long.parseLong(jwtProperties.getExpiration());
     }
 
     @Override

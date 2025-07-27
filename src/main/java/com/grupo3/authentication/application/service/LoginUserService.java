@@ -6,9 +6,11 @@ import com.grupo3.authentication.application.ports.out.ITokenOutPort;
 import com.grupo3.authentication.application.ports.out.IUserServiceOutPort;
 import com.grupo3.authentication.domain.models.TokenPayload;
 import com.grupo3.authentication.domain.models.User;
+import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
+@Service
 public class LoginUserService implements ILoginUserInPort {
 
     private final IUserServiceOutPort userServiceOutPort;
@@ -28,11 +30,11 @@ public class LoginUserService implements ILoginUserInPort {
         Optional<User> user = userServiceOutPort.getUser(username);
 
         if(user.isEmpty()) {
-            throw new RuntimeException("User not found");
+            throw new RuntimeException("User no encontrado");
         }
 
-        if(! encryptOutPort.checkPassword(password,user.get().getPassword())) {
-            throw new RuntimeException("Wrong password");
+        if(!encryptOutPort.checkPassword(password,user.get().getPassword())) {
+            throw new RuntimeException("Contraseña incorrecta");
         }
 
         Integer id = user.get().getId();
@@ -42,7 +44,6 @@ public class LoginUserService implements ILoginUserInPort {
         tokenPayload.setId(id);
         tokenPayload.setUsername(us3rname);
         tokenPayload.setEmail(email);
-
 
         return tokenOutPort.generateToken(tokenPayload);
     }

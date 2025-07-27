@@ -1,0 +1,108 @@
+package com.grupo3.authentication.infrasctucture.controller;
+
+import com.grupo3.authentication.application.service.LoginUserService;
+
+import com.grupo3.authentication.application.service.RegisterUserService;
+import com.grupo3.authentication.application.service.ValidateTokenService;
+import com.grupo3.authentication.domain.models.TokenPayload;
+import com.grupo3.authentication.domain.models.User;
+import com.grupo3.authentication.domain.schemas.RegisterForm;
+import com.grupo3.authentication.infrasctucture.model.dto.LoginResponse;
+import com.grupo3.authentication.infrasctucture.model.dto.MessageResponse;
+import com.grupo3.authentication.infrasctucture.model.dto.RegisterResponse;
+import com.grupo3.authentication.infrasctucture.security.EncryptService;
+import com.grupo3.authentication.infrasctucture.security.TokenService;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+
+@RestController
+@RequestMapping("/auth")
+public class AuthController {
+
+    private final LoginUserService loginUserService;
+    private final RegisterUserService registerUserService;
+    private final ValidateTokenService validateTokenService;
+    private final EncryptService encryptService;
+    private final TokenService tokenService;
+
+
+    public AuthController(LoginUserService loginUserService, RegisterUserService registerUserService, EncryptService encryptService, TokenService tokenService, ValidateTokenService validateTokenService) {
+        this.loginUserService = loginUserService;
+        this.registerUserService = registerUserService;
+        this.encryptService = encryptService;
+        this.tokenService = tokenService;
+        this.validateTokenService = validateTokenService;
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<LoginResponse> login(@RequestParam String username, @RequestParam String password, HttpServletResponse response) {
+        String token = loginUserService.loginUser(username, password);
+
+        //crear cookie
+        Cookie cookie = new Cookie("token", token);
+        cookie.setHttpOnly(true);
+        cookie.setMaxAge(60 * 60 * 24);
+        cookie.setPath("/");
+        cookie.setSecure(true);
+        response.addCookie(cookie);
+
+        LoginResponse data = new LoginResponse("Has iniciado sesión", token);
+        return new ResponseEntity<>(data, HttpStatus.OK);
+    }
+
+    @DeleteMapping("/logout")
+    public ResponseEntity<MessageResponse> logout(@CookieValue(name = "token") String token, HttpServletResponse response) {
+
+        // TODO: agregar if para validar si existe la cookie, si no existe devolver un mensaje que no ha iniciado sesión
+
+        Cookie cookie = new Cookie("token", "");
+        cookie.setHttpOnly(true);
+        cookie.setMaxAge(0);
+        cookie.setPath("/");
+        cookie.setSecure(true);
+        response.addCookie(cookie);
+
+        // TODO: devolver respuesta
+        return  new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @PostMapping("/validate")
+    ResponseEntity<?> validate(@CookieValue(name = "token")  String token) {
+        // TODO: envolver en un try catch para validar errores cuando el token ya esta vencido
+        if(token.isEmpty()){
+            MessageResponse data = new MessageResponse("No se puede validar la token");
+            return new ResponseEntity<>(data, HttpStatus.BAD_REQUEST);
+        }
+        TokenPayload result = this.validateTokenService.validateToken(token);
+        return new  ResponseEntity<>(result, HttpStatus.OK);
+    }
+
+    @PostMapping("/register")
+    ResponseEntity<?> register(@RequestBody RegisterForm form, HttpServletResponse response) {
+        try{
+            String passwordHash = encryptService.encryptPassword(form.getPassword());
+            form.setPassword(passwordHash);
+            User user = registerUserService.registerUser(form);
+            String token = tokenService.generateToken(new TokenPayload(user.getId(), user.getUsername(), user.getEmail()));
+
+            // generar cookie
+            Cookie cookie = new Cookie("token", token);
+            cookie.setHttpOnly(true);
+            cookie.setMaxAge(60 * 60 * 24);
+            cookie.setPath("/");
+            cookie.setSecure(true);
+            response.addCookie(cookie);
+
+            RegisterResponse data = new RegisterResponse("Cuenta registrada con exito", user.getUsername(), token);
+            return new ResponseEntity<>(data, HttpStatus.OK);
+        }
+        catch (Exception e){
+            MessageResponse data = new MessageResponse("No se puedo registrar la cuenta");
+            return new ResponseEntity<>(data, HttpStatus.BAD_REQUEST);
+        }
+    }
+}
