@@ -30,7 +30,12 @@ public class AuthController {
     private final TokenService tokenService;
 
 
-    public AuthController(LoginUserService loginUserService, RegisterUserService registerUserService, EncryptService encryptService, TokenService tokenService, ValidateTokenService validateTokenService) {
+    public AuthController(
+            LoginUserService loginUserService,
+            RegisterUserService registerUserService,
+            EncryptService encryptService,
+            TokenService tokenService,
+            ValidateTokenService validateTokenService) {
         this.loginUserService = loginUserService;
         this.registerUserService = registerUserService;
         this.encryptService = encryptService;
@@ -39,10 +44,11 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@RequestParam String username, @RequestParam String password, HttpServletResponse response) {
+    public ResponseEntity<LoginResponse> login(
+            @RequestParam String username,
+            @RequestParam String password, HttpServletResponse response) {
         String token = loginUserService.loginUser(username, password);
 
-        //crear cookie
         Cookie cookie = new Cookie("token", token);
         cookie.setHttpOnly(true);
         cookie.setMaxAge(60 * 60 * 24);
@@ -57,7 +63,12 @@ public class AuthController {
     @DeleteMapping("/logout")
     public ResponseEntity<MessageResponse> logout(@CookieValue(name = "token") String token, HttpServletResponse response) {
 
-        // TODO: agregar if para validar si existe la cookie, si no existe devolver un mensaje que no ha iniciado sesión
+        MessageResponse msg = new MessageResponse();
+
+        if(token == null || token.isEmpty()){
+            msg.setMessage("no has iniciado sesión");
+            return new ResponseEntity<>(msg, HttpStatus.BAD_REQUEST);
+        }
 
         Cookie cookie = new Cookie("token", "");
         cookie.setHttpOnly(true);
@@ -66,19 +77,23 @@ public class AuthController {
         cookie.setSecure(true);
         response.addCookie(cookie);
 
-        // TODO: devolver respuesta
-        return  new ResponseEntity<>(HttpStatus.OK);
+        msg.setMessage("Has cerrado sesión");
+        return  new ResponseEntity<>(msg, HttpStatus.OK);
     }
 
     @PostMapping("/validate")
     ResponseEntity<?> validate(@CookieValue(name = "token")  String token) {
-        // TODO: envolver en un try catch para validar errores cuando el token ya esta vencido
-        if(token.isEmpty()){
+        try {
+            if(token.isEmpty()){
+                MessageResponse data = new MessageResponse("No se puede validar la token");
+                return new ResponseEntity<>(data, HttpStatus.NOT_ACCEPTABLE);
+            }
+            TokenPayload result = this.validateTokenService.validateToken(token);
+            return new  ResponseEntity<>(result, HttpStatus.OK);
+        } catch (Exception e) {
             MessageResponse data = new MessageResponse("No se puede validar la token");
             return new ResponseEntity<>(data, HttpStatus.BAD_REQUEST);
         }
-        TokenPayload result = this.validateTokenService.validateToken(token);
-        return new  ResponseEntity<>(result, HttpStatus.OK);
     }
 
     @PostMapping("/register")
@@ -97,8 +112,9 @@ public class AuthController {
             cookie.setSecure(true);
             response.addCookie(cookie);
 
-            RegisterResponse data = new RegisterResponse("Cuenta registrada con exito", user.getUsername(), token);
-            return new ResponseEntity<>(data, HttpStatus.OK);
+            // TODO: usar Redis para almacenar temporalmente los datos de usuario y el código de verificación
+            RegisterResponse data = new RegisterResponse("Cuenta registrada con éxito", user.getUsername(), token);
+            return new ResponseEntity<>(data, HttpStatus.CREATED);
         }
         catch (Exception e){
             MessageResponse data = new MessageResponse("No se puedo registrar la cuenta");
