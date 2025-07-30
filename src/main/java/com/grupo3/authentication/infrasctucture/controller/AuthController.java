@@ -1,17 +1,10 @@
 package com.grupo3.authentication.infrasctucture.controller;
 
 import com.grupo3.authentication.application.service.LoginUserService;
-
-import com.grupo3.authentication.application.service.RegisterUserService;
 import com.grupo3.authentication.application.service.ValidateTokenService;
 import com.grupo3.authentication.domain.models.TokenPayload;
-import com.grupo3.authentication.domain.models.User;
-import com.grupo3.authentication.domain.schemas.RegisterForm;
 import com.grupo3.authentication.infrasctucture.model.dto.LoginResponse;
 import com.grupo3.authentication.infrasctucture.model.dto.MessageResponse;
-import com.grupo3.authentication.infrasctucture.model.dto.RegisterResponse;
-import com.grupo3.authentication.infrasctucture.security.EncryptService;
-import com.grupo3.authentication.infrasctucture.security.TokenService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpStatus;
@@ -24,22 +17,12 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final LoginUserService loginUserService;
-    private final RegisterUserService registerUserService;
     private final ValidateTokenService validateTokenService;
-    private final EncryptService encryptService;
-    private final TokenService tokenService;
-
 
     public AuthController(
             LoginUserService loginUserService,
-            RegisterUserService registerUserService,
-            EncryptService encryptService,
-            TokenService tokenService,
             ValidateTokenService validateTokenService) {
         this.loginUserService = loginUserService;
-        this.registerUserService = registerUserService;
-        this.encryptService = encryptService;
-        this.tokenService = tokenService;
         this.validateTokenService = validateTokenService;
     }
 
@@ -92,32 +75,6 @@ public class AuthController {
             return new  ResponseEntity<>(result, HttpStatus.OK);
         } catch (Exception e) {
             MessageResponse data = new MessageResponse("No se puede validar la token");
-            return new ResponseEntity<>(data, HttpStatus.BAD_REQUEST);
-        }
-    }
-
-    @PostMapping("/register")
-    ResponseEntity<?> register(@RequestBody RegisterForm form, HttpServletResponse response) {
-        try{
-            String passwordHash = encryptService.encryptPassword(form.getPassword());
-            form.setPassword(passwordHash);
-            User user = registerUserService.registerUser(form);
-            String token = tokenService.generateToken(new TokenPayload(user.getId(), user.getUsername(), user.getEmail()));
-
-            // generar cookie
-            Cookie cookie = new Cookie("token", token);
-            cookie.setHttpOnly(true);
-            cookie.setMaxAge(60 * 60 * 24);
-            cookie.setPath("/");
-            cookie.setSecure(true);
-            response.addCookie(cookie);
-
-            // TODO: usar Redis para almacenar temporalmente los datos de usuario y el código de verificación
-            RegisterResponse data = new RegisterResponse("Cuenta registrada con éxito", user.getUsername(), token);
-            return new ResponseEntity<>(data, HttpStatus.CREATED);
-        }
-        catch (Exception e){
-            MessageResponse data = new MessageResponse("No se puedo registrar la cuenta");
             return new ResponseEntity<>(data, HttpStatus.BAD_REQUEST);
         }
     }
