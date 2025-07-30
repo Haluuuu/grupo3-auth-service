@@ -18,3 +18,8 @@ spring:
 jwt:
   secret: mySuperSecretKey12345678901234567890
   expiration: 43200000 # en milisegundos (12 hora)
+
+redis:
+  host: localhost
+  port: 6379
+  timeout: 60000
