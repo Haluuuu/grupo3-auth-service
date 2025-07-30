@@ -1,4 +1,4 @@
-package com.grupo3.authentication.infrasctucture.security;
+package com.grupo3.authentication.infrasctucture.service.security;
 
 import com.grupo3.authentication.application.ports.out.ITokenOutPort;
 import com.grupo3.authentication.domain.models.TokenPayload;
