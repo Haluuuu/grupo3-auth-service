@@ -2,7 +2,7 @@ package com.grupo3.authentication.application;
 
 import com.grupo3.authentication.domain.models.TokenPayload;
 import com.grupo3.authentication.infrasctucture.config.JwtProperties;
-import com.grupo3.authentication.infrasctucture.security.TokenService;
+import com.grupo3.authentication.infrasctucture.service.security.TokenService;
 import org.junit.jupiter.api.Test;
 
 import  static org.junit.jupiter.api.Assertions.*;
